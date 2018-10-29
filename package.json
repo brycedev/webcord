@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
-    "canvas": "^2.0.0-alpha.17",
     "commander": "^2.18.0",
     "fluent-ffmpeg": "^2.1.2",
     "image-to-base64": "^2.0.1",
