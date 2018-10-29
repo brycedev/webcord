@@ -32,7 +32,7 @@ const tabletConfig = {
   speeds: { slow: 5, medium: 15, fast: 40 }
 };
 const phoneConfig = { 
-  width: 375, 
+  width: 376, 
   height: 812,
   speeds: { slow: 5, medium: 20, fast: 50 }
 };
@@ -133,6 +133,7 @@ async function createWebcordFromImage(image, config){
       })
     }
   }
+  browser.close()
   console.log('done taking screenshots')
   await buildVideo({
     viewport: config.viewport,
@@ -157,10 +158,10 @@ async function createWebcordFromUrl(url, config){
   } catch (error) {
     process.exit(1)
   }
-  const browser = await puppeteer.launch()
+  const browser = await puppeteer.launch({ headless: true })
   const page = await browser.newPage()
   await page.setViewport(config.viewport)
-  await page.goto(url)
+  await page.goto(url, { "waitUntil": "networkidle0" })
   const bodyHandle = await page.$('body')
   const pageHeight = await page.evaluate(body => body.scrollHeight, bodyHandle)
   const totalFrames = parseInt(((pageHeight - config.viewport.height) / config.speed))
@@ -196,15 +197,16 @@ async function createWebcordFromUrl(url, config){
       })
     }
   }
+  browser.close()
   console.log('done taking screenshots') 
   await buildVideo({
     viewport: config.viewport,
-    padding: config.viewport.width > 375 ? 50 : 25,
+    padding: config.viewport.width > 375 ? 60 : 40,
   })
 }
 
 async function buildVideo(config){
-  console.log('building video')
+  console.log('building videos')
   const size = config.viewport
   const padding = config.padding
   const padColor = commander.background
@@ -214,8 +216,9 @@ async function buildVideo(config){
   command.inputOptions(['-start_number 10'])
   if(commander.background){
     let position
+    console.log(typeof(commander.position))
     if(commander.position == 'center'){
-      position = '(oh-ih)/2'
+      position = '((oh-ih)/2)'
     } else if(commander.position == 'bottom'){
       position = '(oh-ih)'
     }
@@ -249,11 +252,25 @@ async function buildVideo(config){
   }
   command.outputOptions(['-c:v libx264', '-r 29', '-pix_fmt yuv420p', '-crf 17', '-threads 8'])
   command.on('end', () => {
-    console.log('done building video')
-    console.log('cleaning up files')
-    rimraf(imageFolder, () => {
-      process.exit(0)
+    console.log('done building mp4')
+    let webmCommand = ffmpeg(path.resolve('./video.mp4'))
+    webmCommand.outputOptions(['-c:v libvpx', '-f webm', '-b:v 1M'])
+    webmCommand.on('error', function (stderrLine) {
+      process.exit(1)
     })
+    webmCommand.on('stderr', function (stderrLine) {
+      console.log('Stderr output: ' + stderrLine)
+    })
+    webmCommand.on('end', () => {
+      console.log('done building webm')
+      console.log('done building videos')
+      console.log('cleaning up files')
+      rimraf(imageFolder, () => {
+        process.exit(0)
+      })
+    })
+    webmCommand.save('./video.webm')
+    
   })
   command.on('error', function (stderrLine) {
     process.exit(1)
@@ -261,5 +278,6 @@ async function buildVideo(config){
   command.on('stderr', function (stderrLine) {
     console.log('Stderr output: ' + stderrLine)
   })
+  console.log('building mp4')
   command.run()
 }
