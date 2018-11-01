@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 
-const commander = require('commander');
-const puppeteer = require('puppeteer');
-const ffmpeg = require('fluent-ffmpeg');
-const path = require('path');
-const rimraf = require('rimraf');
+const commander = require('commander')
+const puppeteer = require('puppeteer')
+const ffmpeg = require('fluent-ffmpeg')
+const path = require('path')
+const rimraf = require('rimraf')
 const fs = require('fs')
-const image2base64 = require('image-to-base64');
+const image2base64 = require('image-to-base64')
 
 commander.version('1.0.0')
 commander.option('-u, --url <required>', 'url of webpage')
+commander.option('-c, --collection', 'create a collection of exports, or just a single mp4')
 commander.option('-w, --watermark <required>', 'watermark path')
 commander.option('-i, --image <required>', 'use screenshot path instead of url')
 commander.option('-l, --loop', 'ping pong')
@@ -25,7 +26,7 @@ const desktopConfig = {
   width: 1280, 
   height: 720,
   speeds: { slow: 5, medium: 20, fast: 40 }
-};
+}
 const tabletConfig = {
   width: 768,
   height: 1024,
@@ -48,8 +49,13 @@ const imageFolder = path.resolve('./images');
   if (commander.viewport == 'desktop')
     config = desktopConfig
   if (commander.screenshot) {
-    await createScreenshot(commander.url, config)
-    process.exit(0)
+    try {
+      await createScreenshot(commander.url, config)
+      process.exit(0)
+    } catch (error) {
+      console.log(error)
+      process.exit(1)
+    }
   } else {
     if(commander.rate && commander.viewport && commander.url){
       const configuration = {
@@ -60,6 +66,7 @@ const imageFolder = path.resolve('./images');
       try {
         await createWebcordFromUrl(commander.url, configuration)
       } catch (error) {
+        console.log(error)
         process.exit(1)
       }
     } else if(commander.rate && commander.viewport && commander.image) {
@@ -145,10 +152,11 @@ async function createScreenshot(url, viewport){
   const browser = await puppeteer.launch()
   const page = await browser.newPage()
   await page.setViewport(viewport)
-  await page.goto(url)
+  await page.goto(url, { "waitUntil": "networkidle2", timeout: 3000000 })
   console.log('taking screenshot')
   await page.screenshot({ path: commander.screenshot, fullPage: true})
   console.log('done taking screenshot')
+  browser.close()
 }
 
 async function createWebcordFromUrl(url, config){
@@ -161,7 +169,7 @@ async function createWebcordFromUrl(url, config){
   const browser = await puppeteer.launch({ headless: true })
   const page = await browser.newPage()
   await page.setViewport(config.viewport)
-  await page.goto(url, { "waitUntil": "networkidle0" })
+  await page.goto(url, { "waitUntil": "networkidle2", timeout: 3000000 })
   const bodyHandle = await page.$('body')
   const pageHeight = await page.evaluate(body => body.scrollHeight, bodyHandle)
   const totalFrames = parseInt(((pageHeight - config.viewport.height) / config.speed))
@@ -253,26 +261,34 @@ async function buildVideo(config){
   command.outputOptions(['-c:v libx264', '-r 29', '-pix_fmt yuv420p', '-crf 17', '-threads 8'])
   command.on('end', () => {
     console.log('done building mp4')
-    let webmCommand = ffmpeg(path.resolve('./video.mp4'))
-    webmCommand.outputOptions(['-c:v libvpx', '-f webm', '-b:v 1M'])
-    webmCommand.on('error', function (stderrLine) {
-      process.exit(1)
-    })
-    webmCommand.on('stderr', function (stderrLine) {
-      console.log('Stderr output: ' + stderrLine)
-    })
-    webmCommand.on('end', () => {
-      console.log('done building webm')
-      console.log('done building videos')
-      console.log('cleaning up files')
+    if(commander.collection){
+      let webmCommand = ffmpeg(path.resolve('./video.mp4'))
+      webmCommand.outputOptions(['-c:v libvpx', '-f webm', '-b:v 1M'])
+      webmCommand.on('error', function (stderrLine) {
+        console.log(stderrLine)
+        process.exit(1)
+      })
+      webmCommand.on('stderr', function (stderrLine) {
+        // console.log('Stderr output: ' + stderrLine)
+      })
+      webmCommand.on('end', () => {
+        console.log('done building webm')
+        console.log('cleaning up files')
+        rimraf(imageFolder, () => {
+          console.log('done building videos')
+          process.exit(0)
+        })
+      })
+      webmCommand.save('./video.webm')
+    } else {
       rimraf(imageFolder, () => {
+        console.log('done building videos')
         process.exit(0)
       })
-    })
-    webmCommand.save('./video.webm')
-    
+    }    
   })
   command.on('error', function (stderrLine) {
+    console.log(stderrLine)
     process.exit(1)
   })
   command.on('stderr', function (stderrLine) {
