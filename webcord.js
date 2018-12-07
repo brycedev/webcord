@@ -258,7 +258,7 @@ async function buildVideo(config){
       }
     }
   }
-  command.outputOptions(['-c:v libx264', '-r 29', '-pix_fmt yuv420p', '-crf 17', '-threads 8'])
+  command.outputOptions(['-c:v libx264', '-r 29', '-pix_fmt yuv420p', '-crf 10', '-threads 8'])
   command.on('end', () => {
     console.log('done building mp4')
     if(commander.collection){
