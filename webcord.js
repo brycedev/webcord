@@ -24,7 +24,7 @@ commander.parse(process.argv)
 
 const desktopConfig = { 
   width: 1280, 
-  height: 720,
+  height: 960,
   speeds: { slow: 5, medium: 20, fast: 40 }
 }
 const tabletConfig = {
