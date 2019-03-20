@@ -11,7 +11,6 @@ const image2base64 = require('image-to-base64')
 const iPad = devices['iPad']
 const iPhone = devices['iPhone 6']
 
-
 commander.version('1.0.0')
 commander.option('-u, --url <required>', 'url of webpage')
 commander.option('-c, --collection', 'create a collection of exports, or just a single mp4')
@@ -26,7 +25,7 @@ commander.option('-d, --demo', 'generate video in demo mode')
 commander.option('-s, --screenshot [optional]', 'generate screenshot of webpage, only')
 commander.parse(process.argv)
 
-const desktopConfig = { 
+const desktopConfig = {
   emulate: false,
   viewport: { width: 1280, height: 960 },
   speeds: { slow: 10, medium: 25, fast: 40 }
@@ -35,7 +34,7 @@ const tabletConfig = {
   emulate: iPad,
   speeds: { slow: 5, medium: 15, fast: 40 }
 };
-const phoneConfig = { 
+const phoneConfig = {
   emulate: iPhone,
   speeds: { slow: 5, medium: 20, fast: 50 }
 };
@@ -103,7 +102,6 @@ async function createWebcordFromImage(image, config){
   const bodyHandle = await page.$('body')
   const pageHeight = await page.evaluate(body => body.scrollHeight, bodyHandle)
   const totalFrames = parseInt(((pageHeight - screenHeight) / config.speed))
-  if (config.isDemo) totalFrames = totalFrames / 2
   await bodyHandle.dispose()
   console.log('taking screenshots')
   console.log('taking header shots')
@@ -178,9 +176,15 @@ async function createWebcordFromUrl(url, config){
   const bodyHandle = await page.$('body')
   const pageHeight = await page.evaluate(body => body.scrollHeight, bodyHandle)
   const totalFrames = parseInt(((pageHeight - screenHeight) / config.speed))
+  console.log(totalFrames)
   await bodyHandle.dispose()
   console.log('taking screenshots')
   console.log('taking header shots')
+  await new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve()
+    }, 3000)
+  })
   if (totalFrames <= 0 || typeof(totalFrames) == 'undefined') {
     for (let index = 0; index < 310; index++) {
       await page.screenshot({
@@ -210,7 +214,7 @@ async function createWebcordFromUrl(url, config){
     }
   }
   browser.close()
-  console.log('done taking screenshots') 
+  console.log('done taking screenshots')
   try {
     await buildVideo({
       viewport: { width: screenWidth, height: screenHeight },
@@ -240,19 +244,20 @@ async function buildVideo(config){
       } else if (commander.position == 'bottom') {
         position = '(oh-ih)'
       }
-      if (commander.watermark) {
-        command.addInput(commander.watermark)
-        if (commander.loop) {
-          command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
-        } else {
-          command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
-        }
+      // if (commander.watermark) {
+      //   command.addInput(commander.watermark)
+      //   if (commander.loop) {
+      //     command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
+      //   } else {
+      //     command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
+      //   }
+      // } else {
+
+      // }
+      if (commander.loop) {
+        command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}`)
       } else {
-        if (commander.loop) {
-          command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}`)
-        } else {
-          command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}`)
-        }
+        command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}`)
       }
     } else {
       if (commander.watermark) {
