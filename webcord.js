@@ -13,8 +13,8 @@ const iPhone = devices['iPhone 6']
 
 commander.version('1.0.0')
 commander.option('-u, --url <required>', 'url of webpage')
-commander.option('-c, --collection', 'create a collection of exports, or just a single mp4')
-commander.option('-w, --watermark <required>', 'watermark path')
+// commander.option('-c, --collection', 'create a collection of exports, or just a single mp4')
+// commander.option('-w, --watermark <required>', 'watermark path')
 commander.option('-i, --image <required>', 'use screenshot path instead of url')
 commander.option('-l, --loop', 'ping pong')
 commander.option('-r, --rate [optional]', 'speed of scrolling')
@@ -255,23 +255,31 @@ async function buildVideo(config){
 
       // }
       if (commander.loop) {
+        command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
+      } else {
+        command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
+      }
+      if (commander.loop) {
         command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}`)
       } else {
         command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}`)
       }
     } else {
-      if (commander.watermark) {
-        command.addInput(commander.watermark)
-        if (commander.loop) {
-          command.complexFilter('[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15')
-        } else {
-          command.complexFilter('[0][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15')
-        }
-      } else {
-        if (commander.loop) {
-          command.complexFilter(['[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB'])
-        }
-      }
+      // if (commander.watermark) {
+      //   command.addInput(commander.watermark)
+      //   if (commander.loop) {
+      //     command.complexFilter('[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15')
+      //   } else {
+      //     command.complexFilter('[0][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15')
+      //   }
+      // } else {
+        // if (commander.loop) {
+        //   command.complexFilter(['[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB'])
+        // }
+      // }
+    }
+    if (commander.loop) {
+      command.complexFilter(['[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB'])
     }
     command.outputOptions(['-c:v libx264', '-r 29', '-pix_fmt yuv420p', '-crf 10', '-threads 8'])
     command.on('end', () => {
