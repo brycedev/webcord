@@ -14,7 +14,7 @@ const iPhone = devices['iPhone 6']
 commander.version('1.0.0')
 commander.option('-u, --url <required>', 'url of webpage')
 // commander.option('-c, --collection', 'create a collection of exports, or just a single mp4')
-// commander.option('-w, --watermark <required>', 'watermark path')
+commander.option('-w, --watermark <required>', 'watermark path')
 commander.option('-i, --image <required>', 'use screenshot path instead of url')
 commander.option('-l, --loop', 'ping pong')
 commander.option('-r, --rate [optional]', 'speed of scrolling')
