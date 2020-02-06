@@ -244,16 +244,14 @@ async function buildVideo(config){
       } else if (commander.position == 'bottom') {
         position = '(oh-ih)'
       }
-      // if (commander.watermark) {
-      //   command.addInput(commander.watermark)
-      //   if (commander.loop) {
-      //     command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
-      //   } else {
-      //     command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
-      //   }
-      // } else {
-
-      // }
+      if (commander.watermark) {
+        command.addInput(commander.watermark)
+        if (commander.loop) {
+          command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
+        } else {
+          command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
+        }
+      }
       if (commander.loop) {
         command.complexFilter(`[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}[padded];[padded][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15`)
       } else {
@@ -265,18 +263,18 @@ async function buildVideo(config){
         command.complexFilter(`[0:v]scale=${size.width - (padding * 2)}:-1,pad=${size.width}:${size.height}:(ow-iw)/2:${position}:color=${padColor}`)
       }
     } else {
-      // if (commander.watermark) {
-      //   command.addInput(commander.watermark)
-      //   if (commander.loop) {
-      //     command.complexFilter('[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15')
-      //   } else {
-      //     command.complexFilter('[0][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15')
-      //   }
-      // } else {
-        // if (commander.loop) {
-        //   command.complexFilter(['[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB'])
-        // }
-      // }
+      if (commander.watermark) {
+        command.addInput(commander.watermark)
+        if (commander.loop) {
+          command.complexFilter('[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB[out];[out][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15')
+        } else {
+          command.complexFilter('[0][1]overlay=main_w-overlay_w-15:main_h-overlay_h-15')
+        }
+      } else {
+        if (commander.loop) {
+          command.complexFilter(['[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB'])
+        }
+      }
     }
     if (commander.loop) {
       command.complexFilter(['[0:v]reverse[r];[0:v][r]concat,loop=1,setpts=N/29/TB'])
